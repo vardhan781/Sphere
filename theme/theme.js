@@ -1,0 +1,32 @@
+export const theme = {
+  colors: {
+    primary: "#0A84FF",
+    primaryLight: "#409CFF",
+    primaryDark: "#0066E2",
+    secondary: "#00D68F",
+    secondaryLight: "#2BE2A5",
+    secondaryDark: "#00A872",
+    accent1: "#9747FF",
+    accent2: "#FF9F0A",
+    accent3: "#FF3B6F",
+    background: "#000000",
+    backgroundAlt: "#0E0E12",
+    card: "#16161E",
+    cardAlt: "#1E1E2A",
+    text: "#FFFFFF",
+    textSecondary: "#8E8E9F",
+    textTertiary: "#5E5E71",
+    border: "#252532",
+    borderLight: "#323240",
+    success: "#30D158",
+    warning: "#FFD60A",
+    error: "#FF453A",
+    info: "#5E5CE6",
+    storyGradient: ["#F58529", "#DD2A7B", "#8134AF", "#515BD4"],
+    primaryGradient: ["#0A84FF", "#0066E2"],
+    overlay: "rgba(0, 0, 0, 0.5)",
+    overlayLight: "rgba(0, 0, 0, 0.3)",
+  },
+};
+
+export default theme;
