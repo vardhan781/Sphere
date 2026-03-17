@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: wp(3),
-    paddingVertical: hp(1),
+    paddingVertical: hp(2),
     gap: wp(2),
     backgroundColor: theme.colors.background,
   },

@@ -65,6 +65,7 @@ const UserProfile = ({ navigation, route }) => {
     getUserById,
     getUserPosts,
     toggleFollow,
+    createChat,
   } = useContext(AppContext);
 
   const [user, setUser] = useState(null);
@@ -303,11 +304,20 @@ const UserProfile = ({ navigation, route }) => {
 
               <TouchableOpacity
                 style={styles.messageButton}
-                onPress={() => {
-                  // Navigate to chat
-                  navigation.navigate("ChatDetail", {
-                    chat: { participants: [currentUser, user] },
-                  });
+                onPress={async () => {
+                  try {
+                    const result = await createChat(user._id);
+
+                    if (result.success) {
+                      navigation.navigate("ChatDetail", {
+                        chat: result.chat,
+                      });
+                    } else {
+                      toast.error(result.message);
+                    }
+                  } catch (error) {
+                    toast.error("Failed to start chat");
+                  }
                 }}
                 activeOpacity={0.8}
               >

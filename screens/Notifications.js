@@ -195,7 +195,6 @@ const Notifications = ({ navigation }) => {
             >
               {getNotificationText(item)}
             </Text>
-            {!isUnread && <View style={styles.readDot} />}
           </View>
           <Text style={styles.notificationTime}>
             {formatTime(item.createdAt)}
@@ -428,12 +427,12 @@ const styles = StyleSheet.create({
   notificationText: {
     flex: 1,
     fontSize: wp(3.8),
-    color: theme.colors.textSecondary,
+    color: theme.colors.textTertiary,
     lineHeight: hp(2.4),
   },
   unreadText: {
     color: theme.colors.text,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   readDot: {
     width: wp(2),

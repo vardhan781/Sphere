@@ -76,8 +76,6 @@ const ChatDetail = ({ navigation, route }) => {
 
   useEffect(() => {
     fetchMessages();
-    setupSocketListeners();
-
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -86,19 +84,20 @@ const ChatDetail = ({ navigation, route }) => {
   }, []);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !chat?._id) return;
+    socket.emit("join chat", chat._id);
+
+    if (otherUser?._id) {
+      socket.emit("check online", otherUser._id);
+    }
 
     const handleMessage = (newMessage) => {
-      if (newMessage.conversation === chat._id) {
+      if (newMessage.conversation?.toString() === chat._id?.toString()) {
         setMessages((prev) => {
           const exists = prev.find((m) => m._id === newMessage._id);
           if (exists) return prev;
           return [...prev, newMessage];
         });
-
-        setTimeout(() => {
-          flatListRef.current?.scrollToEnd({ animated: true });
-        }, 100);
       }
     };
 
@@ -108,32 +107,30 @@ const ChatDetail = ({ navigation, route }) => {
       }
     };
 
-    socket.on("message received", handleMessage);
-    socket.on("user typing", handleTyping);
-    socket.on("user online", ({ userId }) => {
+    const handleOnline = ({ userId }) => {
       if (userId === otherUser?._id) {
         setIsOnline(true);
       }
-    });
-    socket.on("user offline", ({ userId }) => {
+    };
+
+    const handleOffline = ({ userId }) => {
       if (userId === otherUser?._id) {
         setIsOnline(false);
       }
-    });
+    };
+
+    socket.on("message received", handleMessage);
+    socket.on("user typing", handleTyping);
+    socket.on("user online", handleOnline);
+    socket.on("user offline", handleOffline);
 
     return () => {
       socket.off("message received", handleMessage);
       socket.off("user typing", handleTyping);
-      socket.off("user online");
-      socket.off("user offline");
+      socket.off("user online", handleOnline);
+      socket.off("user offline", handleOffline);
     };
-  }, [socket, chat._id, otherUser?._id]);
-
-  const setupSocketListeners = () => {
-    if (socket && otherUser?._id) {
-      socket.emit("check online", otherUser._id);
-    }
-  };
+  }, [socket, chat?._id, otherUser?._id]);
 
   const fetchMessages = async () => {
     try {
@@ -141,10 +138,6 @@ const ChatDetail = ({ navigation, route }) => {
       const result = await getMessages(chat._id);
       if (result.success) {
         setMessages(result.messages);
-        setTimeout(
-          () => flatListRef.current?.scrollToEnd({ animated: false }),
-          100,
-        );
       } else {
         toast.error(result.message);
       }
@@ -169,11 +162,6 @@ const ChatDetail = ({ navigation, route }) => {
         if (socket) {
           socket.emit("stop typing", chat._id);
         }
-
-        setTimeout(
-          () => flatListRef.current?.scrollToEnd({ animated: true }),
-          100,
-        );
       } else {
         toast.error(result.message);
       }
@@ -196,7 +184,7 @@ const ChatDetail = ({ navigation, route }) => {
       typingTimeoutRef.current = setTimeout(() => {
         socket.emit("stop typing", chat._id);
         typingTimeoutRef.current = null;
-      }, 1000);
+      }, 1500);
     } else if (!text.trim() && typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       socket.emit("stop typing", chat._id);
@@ -250,7 +238,7 @@ const ChatDetail = ({ navigation, route }) => {
     const showDateSeparator =
       index === 0 ||
       new Date(item.createdAt).toDateString() !==
-        new Date(messages[index - 1]?.createdAt).toDateString();
+        new Date(reversedMessages[index - 1]?.createdAt).toDateString();
 
     const showAvatar =
       !isOwnMessage &&
@@ -468,6 +456,8 @@ const ChatDetail = ({ navigation, route }) => {
     );
   }
 
+  const reversedMessages = [...messages].reverse();
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
@@ -479,15 +469,12 @@ const ChatDetail = ({ navigation, route }) => {
       <View style={styles.keyboardView}>
         <FlatList
           ref={flatListRef}
-          data={messages}
+          data={reversedMessages}
+          inverted
           renderItem={renderMessage}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.messagesList}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() =>
-            flatListRef.current?.scrollToEnd({ animated: false })
-          }
-          onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
         />
 
         {otherUserTyping && !sending && renderTypingIndicator()}
@@ -775,18 +762,18 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     borderTopWidth: 0.5,
     borderTopColor: theme.colors.border,
+    paddingBottom: Platform.OS === "ios" ? 0 : hp(1),
   },
   inputContainer: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     paddingHorizontal: wp(3),
-    paddingVertical: hp(1),
+    paddingVertical: hp(1.5),
     gap: wp(2),
     backgroundColor: theme.colors.background,
   },
   attachButton: {
     padding: wp(1),
-    marginBottom: hp(0.5),
   },
   input: {
     flex: 1,
@@ -794,7 +781,7 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     maxHeight: hp(8),
     paddingHorizontal: wp(3),
-    paddingVertical: Platform.OS === "ios" ? hp(1.2) : hp(0.8),
+    paddingVertical: hp(1),
     backgroundColor: theme.colors.card,
     borderRadius: wp(5),
     borderWidth: 0.5,

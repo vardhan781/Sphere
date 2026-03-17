@@ -51,6 +51,7 @@ const Explore = ({ navigation }) => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [followLoading, setFollowLoading] = useState({});
 
   const searchInputRef = useRef(null);
 
@@ -222,6 +223,7 @@ const Explore = ({ navigation }) => {
 
   const handleFollow = async (userId) => {
     try {
+      setFollowLoading((prev) => ({ ...prev, [userId]: true }));
       const result = await toggleFollow(userId);
       if (result.success) {
         setSearchResults((prev) =>
@@ -235,6 +237,8 @@ const Explore = ({ navigation }) => {
       }
     } catch (error) {
       toast.error("Action failed");
+    } finally {
+      setFollowLoading((prev) => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -244,6 +248,7 @@ const Explore = ({ navigation }) => {
 
   const renderSearchItem = ({ item }) => {
     const isFollowing = item.isFollowing || false;
+    const isLoading = followLoading[item._id];
 
     return (
       <TouchableOpacity
@@ -282,15 +287,23 @@ const Explore = ({ navigation }) => {
             style={[styles.followButton, isFollowing && styles.followingButton]}
             onPress={() => handleFollow(item._id)}
             activeOpacity={0.8}
+            disabled={isLoading}
           >
-            <Text
-              style={[
-                styles.followButtonText,
-                isFollowing && styles.followingButtonText,
-              ]}
-            >
-              {isFollowing ? "Following" : "Follow"}
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator
+                size="small"
+                color={isFollowing ? theme.colors.text : "#fff"}
+              />
+            ) : (
+              <Text
+                style={[
+                  styles.followButtonText,
+                  isFollowing && styles.followingButtonText,
+                ]}
+              >
+                {isFollowing ? "Following" : "Follow"}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
       </TouchableOpacity>

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Animated, Dimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { theme } from "../theme/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
 
@@ -10,6 +11,7 @@ const wp = (percentage) => (width * percentage) / 100;
 const hp = (percentage) => (height * percentage) / 100;
 
 const SplashScreen = () => {
+  const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
@@ -58,7 +60,9 @@ const SplashScreen = () => {
         <Text style={styles.tagline}>where connections come alive</Text>
       </Animated.View>
 
-      <Text style={styles.credit}>Developed by Vardhan Sinh</Text>
+      <Text style={[styles.credit, { bottom: Math.max(insets.bottom, hp(8)) }]}>
+        Developed by Vardhan Sinh
+      </Text>
     </View>
   );
 };
@@ -91,7 +95,6 @@ const styles = StyleSheet.create({
   },
   credit: {
     position: "absolute",
-    bottom: hp(5),
     fontSize: wp(3.5),
     color: theme.colors.textTertiary,
     letterSpacing: wp(0.3),

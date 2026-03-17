@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated } from "react-native";
-import { theme } from "../theme/theme";
+import { Text, StyleSheet, Animated, Dimensions } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+
+const { width, height } = Dimensions.get("window");
 
 const Toast = ({
   visible,
@@ -9,21 +11,21 @@ const Toast = ({
   duration = 3000,
   onHide,
 }) => {
-  const translateY = useRef(new Animated.Value(-20)).current;
+  const scale = useRef(new Animated.Value(0.8)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
       Animated.parallel([
-        Animated.spring(translateY, {
-          toValue: 0,
+        Animated.spring(scale, {
+          toValue: 1,
           tension: 60,
           friction: 10,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 1,
-          duration: 250,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]).start();
@@ -38,14 +40,14 @@ const Toast = ({
 
   const hideToast = () => {
     Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: -20,
-        duration: 200,
+      Animated.timing(scale, {
+        toValue: 0.8,
+        duration: 150,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
         toValue: 0,
-        duration: 200,
+        duration: 150,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -55,22 +57,18 @@ const Toast = ({
 
   if (!visible) return null;
 
-  const getBackgroundColor = () => {
+  const getTextColor = () => {
     switch (type) {
       case "success":
         return "#4CAF50";
       case "error":
-        return "#F44336";
+        return "#FF4444";
       case "warning":
-        return "#FF9800";
+        return "#FFA726";
       case "info":
       default:
-        return "#2196F3";
+        return "#FFFFFF";
     }
-  };
-
-  const getTextColor = () => {
-    return type === "info" ? "#FFFFFF" : "#FFFFFF";
   };
 
   return (
@@ -78,13 +76,22 @@ const Toast = ({
       style={[
         styles.container,
         {
-          transform: [{ translateY }],
           opacity,
-          backgroundColor: getBackgroundColor(),
+          transform: [{ scale }],
         },
       ]}
+      pointerEvents="none"
     >
-      <Text style={[styles.message, { color: getTextColor() }]}>{message}</Text>
+      <LinearGradient
+        colors={["#1E1E1E", "#2D2D2D"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradient}
+      >
+        <Text style={[styles.message, { color: getTextColor() }]}>
+          {message}
+        </Text>
+      </LinearGradient>
     </Animated.View>
   );
 };
@@ -92,25 +99,26 @@ const Toast = ({
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    top: 50,
-    left: 20,
-    right: 20,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
-    zIndex: 9999,
+    top: height / 2 - 30,
+    left: 0,
+    right: 0,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 9999,
+  },
+  gradient: {
+    paddingVertical: 8,
+    paddingHorizontal:16,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    maxWidth: width - 80,
+    alignSelf: "center",
   },
   message: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "500",
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
     textAlign: "center",
   },
 });

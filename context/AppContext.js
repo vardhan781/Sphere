@@ -57,7 +57,7 @@ const AppContextProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && !socket) {
       const newSocket = io(serverUrl, {
         transports: ["websocket"],
       });
@@ -85,12 +85,9 @@ const AppContextProvider = ({ children }) => {
       setToken(newToken);
       await AsyncStorage.setItem("token", newToken);
 
-      // Set the token in headers
       api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
 
-      // Fetch full user data
       const userRes = await api.get("/api/users/me");
-      console.log("Full user data:", userRes.data);
       setUser(userRes.data);
 
       return { success: true };
@@ -140,13 +137,14 @@ const AppContextProvider = ({ children }) => {
         });
       }
 
-      const res = await api.put("/api/users/update", formData, {
+      await api.put("/api/users/update", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      setUser(res.data);
+      const userRes = await api.get("/api/users/me");
+      setUser(userRes.data);
 
       return { success: true };
     } catch (error) {
@@ -214,7 +212,6 @@ const AppContextProvider = ({ children }) => {
   const getUserPosts = async (userId) => {
     try {
       const res = await api.get(`/api/post/user/${userId}`);
-      console.log("Logged In User's Post :", res.data);
       return { success: true, posts: res.data };
     } catch (error) {
       return {
@@ -336,7 +333,7 @@ const AppContextProvider = ({ children }) => {
       const res = await api.get("/api/post/feed");
       return { success: true, posts: res.data };
     } catch (error) {
-      console.log("FEED ERROR:", error.response?.data || error.message);
+      console.log("Feed Error:", error.response?.data || error.message);
       return {
         success: false,
         message: error.response?.data?.message || "Fetch feed failed",

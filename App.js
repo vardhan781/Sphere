@@ -1,11 +1,16 @@
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "./theme/theme";
-import { Platform, Dimensions, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Platform, Dimensions, View, Text, LogBox } from "react-native";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+
+LogBox.ignoreAllLogs();
 
 import SplashScreen from "./components/SplashScreen";
 import Home from "./screens/Home";
@@ -15,10 +20,6 @@ import Notifications from "./screens/Notifications";
 import Profile from "./screens/Profile";
 import AuthScreen from "./screens/AuthScreen";
 import EditProfile from "./screens/EditProfile";
-import AppContextProvider from "./context/AppContext";
-import { useContext, useEffect, useState } from "react";
-import { AppContext } from "./context/AppContext";
-import { ToastProvider } from "./context/ToastContext";
 import Settings from "./screens/Settings";
 import PostDetail from "./screens/PostDetail";
 import EditPost from "./screens/EditPost";
@@ -32,14 +33,32 @@ import ChatDetail from "./screens/ChatDetail";
 import Followers from "./screens/Followers";
 import Following from "./screens/Following";
 
-const Stack = createNativeStackNavigator();
+import AppContextProvider from "./context/AppContext";
+import { ToastProvider } from "./context/ToastContext";
+import { useContext, useEffect, useState } from "react";
+import { AppContext } from "./context/AppContext";
+
+const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+const AppTheme = {
+  ...DefaultTheme,
+  dark: true,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: theme.colors.primary,
+    background: theme.colors.background,
+    card: theme.colors.card,
+    text: theme.colors.text,
+    border: theme.colors.border,
+    notification: theme.colors.primary,
+  },
+};
+
 function MainTabs() {
   const insets = useSafeAreaInsets();
-
   const hasGestureNav = Platform.OS === "android" && insets.bottom > 0;
   const bottomPadding = hasGestureNav ? insets.bottom : 0;
   const tabBarHeight = 60;
@@ -48,41 +67,32 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarIcon: ({ color, focused }) => {
+          let iconName;
+          if (route.name === "Home")
+            iconName = focused ? "home" : "home-outline";
+          else if (route.name === "Explore")
+            iconName = focused ? "compass" : "compass-outline";
+          else if (route.name === "Create")
+            iconName = focused ? "add-circle" : "add-circle-outline";
+          else if (route.name === "Notifications")
+            iconName = focused ? "heart" : "heart-outline";
+          else if (route.name === "Profile")
+            iconName = focused ? "person-circle" : "person-circle-outline";
+
+          return <Ionicons name={iconName} size={28} color={color} />;
+        },
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
+        tabBarShowLabel: SCREEN_WIDTH > 400,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "500", marginBottom: 4 },
         tabBarStyle: {
           backgroundColor: theme.colors.card,
           borderTopColor: theme.colors.border,
           borderTopWidth: 1,
           height: tabBarHeight + bottomPadding,
           paddingBottom: bottomPadding || 0,
-          paddingTop: 0,
-          ...(Platform.OS === "android" && {
-            elevation: 8,
-          }),
-        },
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.textSecondary,
-        tabBarShowLabel: SCREEN_WIDTH > 400,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "500",
-          marginBottom: 4,
-        },
-        tabBarIcon: ({ color, focused, size }) => {
-          let iconName;
-
-          if (route.name === "Home") {
-            iconName = focused ? "home" : "home-outline";
-          } else if (route.name === "Explore") {
-            iconName = focused ? "compass" : "compass-outline";
-          } else if (route.name === "Create") {
-            iconName = focused ? "add-circle" : "add-circle-outline";
-          } else if (route.name === "Notifications") {
-            iconName = focused ? "heart" : "heart-outline";
-          } else if (route.name === "Profile") {
-            iconName = focused ? "person-circle" : "person-circle-outline";
-          }
-
-          return <Ionicons name={iconName} size={28} color={color} />;
+          ...(Platform.OS === "android" && { elevation: 8 }),
         },
       })}
     >
@@ -100,10 +110,7 @@ function RootNavigator() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 3000);
-
+    const timer = setTimeout(() => setShowSplash(false), 3000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -113,24 +120,25 @@ function RootNavigator() {
 
   return (
     <Stack.Navigator
+      initialRouteName={user ? "Main" : "Auth"}
       screenOptions={{
         headerShown: false,
-        animation: Platform.OS === "android" ? "slide_from_right" : "default",
-        gestureEnabled: true,
-        gestureDirection: "horizontal",
-        fullScreenGestureEnabled: true,
+        cardStyle: { backgroundColor: theme.colors.background },
+
+        cardStyleInterpolator: ({ current: { progress } }) => ({
+          cardStyle: {
+            opacity: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 1],
+            }),
+          },
+        }),
       }}
     >
       {user ? (
         <>
           <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen
-            name="EditProfile"
-            component={EditProfile}
-            options={{
-              animation: "slide_from_bottom",
-            }}
-          />
+          <Stack.Screen name="EditProfile" component={EditProfile} />
           <Stack.Screen name="Settings" component={Settings} />
           <Stack.Screen name="PostDetail" component={PostDetail} />
           <Stack.Screen name="EditPost" component={EditPost} />
@@ -152,14 +160,37 @@ function RootNavigator() {
 }
 
 export default function App() {
-  return (
-    <AppContextProvider>
-      <ToastProvider>
-        <NavigationContainer>
-          <StatusBar style="light" />
-          <RootNavigator />
-        </NavigationContainer>
-      </ToastProvider>
-    </AppContextProvider>
-  );
+  try {
+    return (
+      <SafeAreaProvider>
+        <AppContextProvider>
+          <ToastProvider>
+            <NavigationContainer theme={AppTheme}>
+              <StatusBar
+                style="light"
+                backgroundColor={theme.colors.background}
+              />
+              <RootNavigator />
+            </NavigationContainer>
+          </ToastProvider>
+        </AppContextProvider>
+      </SafeAreaProvider>
+    );
+  } catch (error) {
+    console.error("App rendering failed:", error);
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.colors.background,
+        }}
+      >
+        <Text style={{ color: theme.colors.text, fontSize: 18 }}>
+          Something went wrong
+        </Text>
+      </View>
+    );
+  }
 }

@@ -129,7 +129,7 @@ const Chats = ({ navigation }) => {
     const otherUser = item.participants?.find(
       (u) => u._id !== currentUser?._id,
     );
-    const lastMessage = item.latestMessage;
+    const lastMessage = item.lastMessage;
     const hasUnread = item.unreadCount > 0;
 
     return (
@@ -165,9 +165,12 @@ const Chats = ({ navigation }) => {
               </Text>
             )}
           </View>
-          
+
           <View style={styles.messageRow}>
-            <Text style={[styles.lastMessage, hasUnread && styles.unreadMessage]} numberOfLines={1}>
+            <Text
+              style={[styles.lastMessage, hasUnread && styles.unreadMessage]}
+              numberOfLines={1}
+            >
               {lastMessage?.text || "No messages yet"}
             </Text>
             {hasUnread && <View style={styles.unreadBadge} />}
@@ -197,16 +200,20 @@ const Chats = ({ navigation }) => {
           </View>
         )}
       </View>
-      
+
       <View style={styles.searchInfo}>
         <Text style={styles.searchUsername}>{item.username}</Text>
         <Text style={styles.searchUserBio} numberOfLines={1}>
           Tap to start chatting
         </Text>
       </View>
-      
+
       <View style={styles.startChatButton}>
-        <Icon name="chatbubble-ellipses" size={wp(5)} color={theme.colors.primary} />
+        <Icon
+          name="chatbubble-ellipses"
+          size={wp(5)}
+          color={theme.colors.primary}
+        />
       </View>
     </TouchableOpacity>
   );
@@ -220,7 +227,7 @@ const Chats = ({ navigation }) => {
       <Text style={styles.emptyText}>
         Start a conversation with someone by tapping the search icon above
       </Text>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.emptyButton}
         onPress={() => setShowSearch(true)}
       >
@@ -232,25 +239,25 @@ const Chats = ({ navigation }) => {
 
   const renderHeader = () => (
     <View style={styles.header}>
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={() => navigation.goBack()}
         style={styles.headerButton}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <Icon name="arrow-back" size={wp(6)} color={theme.colors.text} />
       </TouchableOpacity>
-      
+
       <Text style={styles.headerTitle}>Messages</Text>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         onPress={() => setShowSearch(!showSearch)}
         style={styles.headerButton}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <Icon 
-          name={showSearch ? "close" : "search"} 
-          size={wp(6)} 
-          color={showSearch ? theme.colors.primary : theme.colors.text} 
+        <Icon
+          name={showSearch ? "close" : "search"}
+          size={wp(6)}
+          color={showSearch ? theme.colors.primary : theme.colors.text}
         />
       </TouchableOpacity>
     </View>
@@ -259,7 +266,10 @@ const Chats = ({ navigation }) => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={theme.colors.background}
+        />
         {renderHeader()}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -271,14 +281,21 @@ const Chats = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={theme.colors.background} />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={theme.colors.background}
+      />
       {renderHeader()}
 
       {/* Search Section */}
       {showSearch && (
         <View style={styles.searchSection}>
           <View style={styles.searchBar}>
-            <Icon name="search" size={wp(4.5)} color={theme.colors.textSecondary} />
+            <Icon
+              name="search"
+              size={wp(4.5)}
+              color={theme.colors.textSecondary}
+            />
             <TextInput
               style={styles.searchInput}
               placeholder="Search users..."
@@ -314,14 +331,26 @@ const Chats = ({ navigation }) => {
             />
           ) : searchQuery && !searching ? (
             <View style={styles.noResults}>
-              <Icon name="people-outline" size={wp(10)} color={theme.colors.textSecondary} />
+              <Icon
+                name="people-outline"
+                size={wp(10)}
+                color={theme.colors.textSecondary}
+              />
               <Text style={styles.noResultsText}>No users found</Text>
-              <Text style={styles.noResultsSubtext}>Try a different search term</Text>
+              <Text style={styles.noResultsSubtext}>
+                Try a different search term
+              </Text>
             </View>
           ) : (
             <View style={styles.searchHint}>
-              <Icon name="search-outline" size={wp(8)} color={theme.colors.textSecondary} />
-              <Text style={styles.searchHintText}>Find people to chat with</Text>
+              <Icon
+                name="search-outline"
+                size={wp(8)}
+                color={theme.colors.textSecondary}
+              />
+              <Text style={styles.searchHintText}>
+                Find people to chat with
+              </Text>
             </View>
           )}
         </View>
@@ -386,7 +415,7 @@ const styles = StyleSheet.create({
     fontSize: wp(3.8),
     color: theme.colors.textSecondary,
   },
-  
+
   // Search Section
   searchSection: {
     flex: 1,

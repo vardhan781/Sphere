@@ -20,13 +20,17 @@
         "foregroundImage": "./assets/splash.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.vardhan_sinh.Sphere"
     },
     "web": {
       "favicon": "./assets/splash.png"
     },
     "extra": {
-      "backendUrl": "https://sphere-server.onrender.com"
+      "backendUrl": "https://sphere-server.onrender.com",
+      "eas": {
+        "projectId": "084d0cce-2bfe-44f6-bdc9-4da8aa55886a"
+      }
     }
   }
 }

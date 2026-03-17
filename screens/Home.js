@@ -13,6 +13,7 @@ import {
   Dimensions,
   Alert,
   Keyboard,
+  Animated,
 } from "react-native";
 import { useState, useContext, useEffect, useCallback, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -21,6 +22,7 @@ import { theme } from "../theme/theme";
 import { AppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { formatDistanceToNow } from "date-fns";
+import { KeyboardAvoidingView } from "react-native";
 
 const { width, height } = Dimensions.get("window");
 
@@ -48,26 +50,62 @@ const Home = ({ navigation }) => {
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [postComments, setPostComments] = useState([]);
+  const [modalHeight, setModalHeight] = useState(MODAL_FIXED_HEIGHT);
   const lastTapRef = useRef(null);
   const likeTimeoutRef = useRef(null);
   const flatListRef = useRef(null);
   const inputRef = useRef(null);
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const inputTranslateY = useRef(new Animated.Value(0)).current;
+
+  const triggerHeartAnimation = () => {
+    scaleAnim.setValue(0);
+    opacityAnim.setValue(1);
+
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 5,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 0,
+        duration: 600,
+        delay: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   useEffect(() => {
-    const keyboardWillShow = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      (e) => setKeyboardHeight(e.endCoordinates.height),
-    );
-    const keyboardWillHide = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setKeyboardHeight(0),
-    );
+    if (Platform.OS === "ios") {
+      const show = Keyboard.addListener("keyboardWillShow", (e) => {
+        Animated.timing(inputTranslateY, {
+          toValue: -e.endCoordinates.height,
+          duration: 250,
+          useNativeDriver: true,
+        }).start();
+      });
 
-    return () => {
-      keyboardWillShow.remove();
-      keyboardWillHide.remove();
-    };
+      const hide = Keyboard.addListener("keyboardWillHide", () => {
+        Animated.timing(inputTranslateY, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }).start();
+      });
+
+      return () => {
+        show.remove();
+        hide.remove();
+      };
+    }
   }, []);
+
+  const modalHeightAnim = useRef(
+    new Animated.Value(MODAL_FIXED_HEIGHT),
+  ).current;
 
   const fetchFeedPosts = async () => {
     try {
@@ -125,6 +163,8 @@ const Home = ({ navigation }) => {
     if (lastTapRef.current && now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       const post = posts.find((p) => p._id === postId);
       const isAlreadyLiked = post?.likes?.includes(currentUser?._id);
+
+      triggerHeartAnimation();
 
       if (!isAlreadyLiked) {
         handleLike(postId);
@@ -314,7 +354,26 @@ const Home = ({ navigation }) => {
           }
           delayLongPress={500}
         >
-          <Image source={{ uri: item.image }} style={styles.postImage} />
+          <View style={{ position: "relative" }}>
+            <Image source={{ uri: item.image }} style={styles.postImage} />
+
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: [
+                  { translateX: -40 },
+                  { translateY: -40 },
+                  { scale: scaleAnim },
+                ],
+                opacity: opacityAnim,
+              }}
+            >
+              <Icon name="heart" size={80} color="red" />
+            </Animated.View>
+          </View>
         </TouchableOpacity>
 
         <View style={styles.postActions}>
@@ -496,109 +555,120 @@ const Home = ({ navigation }) => {
             onPress={closeCommentModal}
           />
 
-          <View
-            style={[
-              styles.modalContent,
-              {
-                height:
-                  keyboardHeight > 0
-                    ? MODAL_FIXED_HEIGHT + 50
-                    : MODAL_FIXED_HEIGHT,
-              },
-            ]}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 80}
+            style={{ width: "100%" }}
           >
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Comments</Text>
-              <TouchableOpacity onPress={closeCommentModal}>
-                <Icon name="close" size={wp(5)} color={theme.colors.text} />
-              </TouchableOpacity>
-            </View>
-
-            {selectedPost && (
-              <View style={styles.modalPostPreview}>
-                <Image
-                  source={{ uri: selectedPost.image }}
-                  style={styles.modalPostImage}
-                />
-                <View style={styles.modalPostInfo}>
-                  <Text style={styles.modalUsername}>
-                    {selectedPost.user?.username}
-                  </Text>
-                  <Text style={styles.modalCaptionSimple} numberOfLines={2}>
-                    {selectedPost.caption || "No caption"}
-                  </Text>
-                </View>
-              </View>
-            )}
-
-            <FlatList
-              ref={flatListRef}
-              data={postComments}
-              renderItem={renderComment}
-              keyExtractor={(item) => item._id}
-              showsVerticalScrollIndicator={false}
-              style={styles.modalList}
-              contentContainerStyle={styles.modalCommentsList}
-              ListEmptyComponent={
-                <View style={styles.noCommentsContainer}>
-                  <Icon
-                    name="chatbubbles-outline"
-                    size={wp(10)}
-                    color={theme.colors.textSecondary}
-                  />
-                  <Text style={styles.noCommentsText}>No comments yet</Text>
-                  <Text style={styles.noCommentsSubtext}>
-                    Be the first to comment!
-                  </Text>
-                </View>
-              }
-            />
-
-            <View
+            <Animated.View
               style={[
-                styles.modalCommentInput,
-                keyboardHeight > 0 && { paddingBottom: keyboardHeight },
+                styles.modalContent,
+                {
+                  height: MODAL_FIXED_HEIGHT,
+                },
               ]}
             >
-              <Image
-                source={{
-                  uri:
-                    currentUser?.profilePic || "https://via.placeholder.com/36",
-                }}
-                style={styles.modalInputAvatar}
-              />
-              <TextInput
-                ref={inputRef}
-                style={styles.modalInput}
-                placeholder="Add a comment..."
-                placeholderTextColor={theme.colors.textTertiary}
-                value={commentText}
-                onChangeText={setCommentText}
-                multiline
-                maxLength={500}
-              />
-              <TouchableOpacity
-                onPress={handleAddComment}
-                disabled={!commentText.trim() || submittingComment}
-              >
-                {submittingComment ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={theme.colors.primary}
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Comments</Text>
+                <TouchableOpacity onPress={closeCommentModal}>
+                  <Icon name="close" size={wp(5)} color={theme.colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              {selectedPost && (
+                <View style={styles.modalPostPreview}>
+                  <Image
+                    source={{ uri: selectedPost.image }}
+                    style={styles.modalPostImage}
                   />
-                ) : (
-                  <Text
-                    style={[
-                      styles.modalSendButtonText,
-                      !commentText.trim() && styles.modalSendButtonDisabled,
-                    ]}
-                  >
-                    Post
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
+                  <View style={styles.modalPostInfo}>
+                    <Text style={styles.modalUsername}>
+                      {selectedPost.user?.username}
+                    </Text>
+                    <Text style={styles.modalCaptionSimple} numberOfLines={2}>
+                      {selectedPost.caption || "No caption"}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              <FlatList
+                ref={flatListRef}
+                data={postComments}
+                renderItem={renderComment}
+                keyExtractor={(item) => item._id}
+                showsVerticalScrollIndicator={false}
+                style={styles.modalList}
+                contentContainerStyle={styles.modalCommentsList}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="interactive"
+                ListEmptyComponent={
+                  <View style={styles.noCommentsContainer}>
+                    <Icon
+                      name="chatbubbles-outline"
+                      size={wp(10)}
+                      color={theme.colors.textSecondary}
+                    />
+                    <Text style={styles.noCommentsText}>No comments yet</Text>
+                    <Text style={styles.noCommentsSubtext}>
+                      Be the first to comment!
+                    </Text>
+                  </View>
+                }
+              />
+
+              <Animated.View
+                style={[
+                  styles.modalCommentInput,
+                  {
+                    transform:
+                      Platform.OS === "ios"
+                        ? [{ translateY: inputTranslateY }]
+                        : [],
+                  },
+                ]}
+              >
+                <Image
+                  source={{
+                    uri:
+                      currentUser?.profilePic ||
+                      "https://via.placeholder.com/36",
+                  }}
+                  style={styles.modalInputAvatar}
+                />
+                <TextInput
+                  ref={inputRef}
+                  style={styles.modalInput}
+                  placeholder="Add a comment..."
+                  placeholderTextColor={theme.colors.textTertiary}
+                  value={commentText}
+                  onChangeText={setCommentText}
+                  multiline
+                  maxLength={500}
+                />
+                <TouchableOpacity
+                  onPress={handleAddComment}
+                  disabled={!commentText.trim() || submittingComment}
+                >
+                  {submittingComment ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.colors.primary}
+                    />
+                  ) : (
+                    <Text
+                      style={[
+                        styles.modalSendButtonText,
+                        !commentText.trim() && styles.modalSendButtonDisabled,
+                      ]}
+                    >
+                      Post
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            </Animated.View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </SafeAreaView>
@@ -687,7 +757,7 @@ const styles = StyleSheet.create({
   leftActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: wp(3),
+    gap: wp(4),
   },
   likesCount: {
     fontSize: wp(3.5),
@@ -792,12 +862,6 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContainer: {
-    width: "100%",
-    justifyContent: "flex-end",
   },
   modalHeader: {
     flexDirection: "row",
@@ -809,9 +873,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: hp(1),
   },
-  modalHeaderRight: {
-    width: wp(5),
-  },
   modalTitle: {
     fontSize: wp(4.5),
     fontWeight: "600",
@@ -819,23 +880,25 @@ const styles = StyleSheet.create({
   },
   modalCloseArea: {
     flex: 1,
-    width: "100%",
   },
   modalContent: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: MODAL_FIXED_HEIGHT,
     backgroundColor: theme.colors.background,
     borderTopLeftRadius: wp(5),
     borderTopRightRadius: wp(5),
     padding: wp(4),
-    width: "100%",
   },
   modalCommentInput: {
     flexDirection: "row",
     alignItems: "center",
     paddingTop: hp(1.5),
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
     gap: wp(2),
     backgroundColor: theme.colors.background,
+    paddingBottom: hp(1),
   },
   modalPostPreview: {
     flexDirection: "row",
