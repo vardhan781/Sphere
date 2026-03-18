@@ -60,9 +60,16 @@ const SplashScreen = () => {
         <Text style={styles.tagline}>where connections come alive</Text>
       </Animated.View>
 
-      <Text style={[styles.credit, { bottom: Math.max(insets.bottom, hp(8)) }]}>
-        Developed by Vardhan Sinh
-      </Text>
+      <View
+        style={{
+          position: "absolute",
+          bottom: insets.bottom + hp(6),
+          width: "100%",
+          alignItems: "center",
+        }}
+      >
+        <Text style={styles.credit}>Developed by Vardhan Sinh</Text>
+      </View>
     </View>
   );
 };
@@ -94,7 +101,6 @@ const styles = StyleSheet.create({
     letterSpacing: wp(0.5),
   },
   credit: {
-    position: "absolute",
     fontSize: wp(3.5),
     color: theme.colors.textTertiary,
     letterSpacing: wp(0.3),

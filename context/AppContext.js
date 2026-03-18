@@ -59,7 +59,7 @@ const AppContextProvider = ({ children }) => {
   useEffect(() => {
     if (user && !socket) {
       const newSocket = io(serverUrl, {
-        transports: ["websocket"],
+        transports: ["polling", "websocket"],
       });
 
       newSocket.emit("join", user._id);

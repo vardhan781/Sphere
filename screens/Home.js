@@ -16,7 +16,10 @@ import {
   Animated,
 } from "react-native";
 import { useState, useContext, useEffect, useCallback, useRef } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/Ionicons";
 import { theme } from "../theme/theme";
 import { AppContext } from "../context/AppContext";
@@ -44,13 +47,11 @@ const Home = ({ navigation }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [commentModal, setCommentModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [commentText, setCommentText] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [postComments, setPostComments] = useState([]);
-  const [modalHeight, setModalHeight] = useState(MODAL_FIXED_HEIGHT);
   const lastTapRef = useRef(null);
   const likeTimeoutRef = useRef(null);
   const flatListRef = useRef(null);
@@ -58,6 +59,7 @@ const Home = ({ navigation }) => {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const inputTranslateY = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
 
   const triggerHeartAnimation = () => {
     scaleAnim.setValue(0);
@@ -79,28 +81,31 @@ const Home = ({ navigation }) => {
   };
 
   useEffect(() => {
-    if (Platform.OS === "ios") {
-      const show = Keyboard.addListener("keyboardWillShow", (e) => {
-        Animated.timing(inputTranslateY, {
-          toValue: -e.endCoordinates.height,
-          duration: 250,
-          useNativeDriver: true,
-        }).start();
-      });
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
-      const hide = Keyboard.addListener("keyboardWillHide", () => {
-        Animated.timing(inputTranslateY, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true,
-        }).start();
-      });
+    const show = Keyboard.addListener(showEvent, (e) => {
+      Animated.timing(inputTranslateY, {
+        toValue: -e.endCoordinates.height,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    });
 
-      return () => {
-        show.remove();
-        hide.remove();
-      };
-    }
+    const hide = Keyboard.addListener(hideEvent, () => {
+      Animated.timing(inputTranslateY, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    return () => {
+      show.remove();
+      hide.remove();
+    };
   }, []);
 
   const modalHeightAnim = useRef(
@@ -527,6 +532,7 @@ const Home = ({ navigation }) => {
         data={posts}
         renderItem={renderPost}
         keyExtractor={(item) => item._id}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.feedContainer}
         ListEmptyComponent={renderEmptyFeed}
@@ -553,13 +559,10 @@ const Home = ({ navigation }) => {
             style={styles.modalCloseArea}
             activeOpacity={1}
             onPress={closeCommentModal}
+            pointerEvents="box-none"
           />
 
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 80}
-            style={{ width: "100%" }}
-          >
+          <View style={{ width: "100%" }}>
             <Animated.View
               style={[
                 styles.modalContent,
@@ -621,10 +624,8 @@ const Home = ({ navigation }) => {
                 style={[
                   styles.modalCommentInput,
                   {
-                    transform:
-                      Platform.OS === "ios"
-                        ? [{ translateY: inputTranslateY }]
-                        : [],
+                    paddingBottom: insets.bottom,
+                    transform: [{ translateY: inputTranslateY }],
                   },
                 ]}
               >
@@ -668,7 +669,7 @@ const Home = ({ navigation }) => {
                 </TouchableOpacity>
               </Animated.View>
             </Animated.View>
-          </KeyboardAvoidingView>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
