@@ -59,17 +59,30 @@ const AppContextProvider = ({ children }) => {
   useEffect(() => {
     if (user && !socket) {
       const newSocket = io(serverUrl, {
-        transports: ["polling", "websocket"],
+        transports: ["websocket"],
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
       });
 
-      newSocket.emit("join", user._id);
-      console.log("Joined personal room:", user._id);
+      newSocket.on("connect", () => {
+        console.log("Connected to Socket. ID:", newSocket.id);
+        newSocket.emit("join", user._id);
+      });
+
+      newSocket.on("disconnect", (reason) => {
+        console.log("Socket disconnected:", reason);
+      });
 
       setSocket(newSocket);
 
-      return () => newSocket.disconnect();
+      return () => {
+        newSocket.off("connect");
+        newSocket.off("disconnect");
+        newSocket.disconnect();
+      };
     }
-  }, [user]);
+  }, [user?._id]);
 
   const login = async (email, password) => {
     try {
@@ -120,6 +133,10 @@ const AppContextProvider = ({ children }) => {
     await AsyncStorage.removeItem("token");
     setUser(null);
     setToken(null);
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
   };
 
   const updateProfile = async ({ username, bio, image }) => {
