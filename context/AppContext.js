@@ -57,32 +57,36 @@ const AppContextProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (user && !socket) {
-      const newSocket = io(serverUrl, {
-        transports: ["websocket"],
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-      });
+    if (!user?._id) return;
 
-      newSocket.on("connect", () => {
-        console.log("Connected to Socket. ID:", newSocket.id);
-        newSocket.emit("join", user._id);
-      });
+    const newSocket = io(serverUrl, {
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+    });
 
-      newSocket.on("disconnect", (reason) => {
-        console.log("Socket disconnected:", reason);
-      });
+    const handleConnect = () => {
+      console.log("Connected to Socket. ID:", newSocket.id);
+      newSocket.emit("join", user._id);
+    };
 
-      setSocket(newSocket);
+    const handleDisconnect = (reason) => {
+      console.log("Socket disconnected:", reason);
+    };
 
-      return () => {
-        newSocket.off("connect");
-        newSocket.off("disconnect");
-        newSocket.disconnect();
-      };
-    }
-  }, [user?._id]);
+    newSocket.on("connect", handleConnect);
+    newSocket.on("disconnect", handleDisconnect);
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.off("connect", handleConnect);
+      newSocket.off("disconnect", handleDisconnect);
+      newSocket.disconnect();
+      setSocket(null);
+    };
+  }, [user?._id, serverUrl]);
 
   const login = async (email, password) => {
     try {

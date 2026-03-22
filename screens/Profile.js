@@ -205,7 +205,6 @@ const Profile = ({ navigation }) => {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading posts...</Text>
         </View>
       );
     }
@@ -491,10 +490,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     minHeight: hp(40),
-  },
-  loadingText: {
-    marginTop: hp(2),
-    fontSize: wp(3.8),
-    color: theme.colors.textSecondary,
   },
 });

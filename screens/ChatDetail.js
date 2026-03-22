@@ -85,6 +85,8 @@ const ChatDetail = ({ navigation, route }) => {
 
   useEffect(() => {
     if (!socket || !chat?._id) return;
+
+    setIsOnline(false); // reset when screen/chat changes
     socket.emit("join chat", chat._id);
 
     if (otherUser?._id) {
@@ -107,28 +109,28 @@ const ChatDetail = ({ navigation, route }) => {
       }
     };
 
-    const handleOnline = ({ userId }) => {
+    const handleOnlineStatus = ({ userId, isOnline }) => {
       if (userId === otherUser?._id) {
-        setIsOnline(true);
+        setIsOnline(isOnline);
       }
     };
 
-    const handleOffline = ({ userId }) => {
+    const handlePresenceUpdate = ({ userId, isOnline }) => {
       if (userId === otherUser?._id) {
-        setIsOnline(false);
+        setIsOnline(isOnline);
       }
     };
 
     socket.on("message received", handleMessage);
     socket.on("user typing", handleTyping);
-    socket.on("user online", handleOnline);
-    socket.on("user offline", handleOffline);
+    socket.on("online status", handleOnlineStatus);
+    socket.on("presence update", handlePresenceUpdate);
 
     return () => {
       socket.off("message received", handleMessage);
       socket.off("user typing", handleTyping);
-      socket.off("user online", handleOnline);
-      socket.off("user offline", handleOffline);
+      socket.off("online status", handleOnlineStatus);
+      socket.off("presence update", handlePresenceUpdate);
     };
   }, [socket, chat?._id, otherUser?._id]);
 
@@ -634,8 +636,8 @@ const styles = StyleSheet.create({
   },
   messagesList: {
     paddingHorizontal: wp(3),
-    paddingVertical: hp(2),
-    paddingBottom: hp(2),
+    paddingVertical: hp(2.2),
+    paddingBottom: hp(3),
   },
   dateSeparator: {
     alignItems: "center",
@@ -653,7 +655,7 @@ const styles = StyleSheet.create({
   },
   messageRow: {
     flexDirection: "row",
-    marginBottom: hp(0.5),
+    marginBottom: hp(1.2),
   },
   ownMessageRow: {
     justifyContent: "flex-end",

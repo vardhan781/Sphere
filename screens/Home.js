@@ -277,6 +277,44 @@ const Home = ({ navigation }) => {
     return `${Math.floor(diffInSeconds / 31536000)}y`;
   };
 
+  const renderAvatar = (profilePic, size) => {
+    if (profilePic) {
+      return (
+        <Image
+          source={{ uri: profilePic }}
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+          }}
+        />
+      );
+    }
+
+    return (
+      <View
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.card,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Icon
+          name="person-outline"
+          size={size * 0.55}
+          color={theme.colors.textSecondary}
+        />
+      </View>
+    );
+  };
+
   const renderComment = ({ item }) => {
     const isOwnComment = item.user?._id === currentUser?._id;
     const confirmDelete = () => {
@@ -291,12 +329,7 @@ const Home = ({ navigation }) => {
     };
     return (
       <View style={styles.modalCommentItem}>
-        <Image
-          source={{
-            uri: item.user?.profilePic || "https://via.placeholder.com/40",
-          }}
-          style={styles.modalCommentAvatar}
-        />
+        {renderAvatar(item.user?.profilePic, wp(8))}
         <View style={styles.modalCommentContent}>
           <View style={styles.modalCommentHeader}>
             <Text style={styles.modalCommentUsername}>
@@ -340,12 +373,7 @@ const Home = ({ navigation }) => {
             style={styles.userInfo}
             onPress={() => navigateToProfile(item.user?._id)}
           >
-            <Image
-              source={{
-                uri: item.user?.profilePic || "https://via.placeholder.com/40",
-              }}
-              style={styles.avatar}
-            />
+            {renderAvatar(item.user?.profilePic, wp(8))}
             <Text style={styles.username}>{item.user?.username || "user"}</Text>
           </TouchableOpacity>
           <Text style={styles.timeAgo}>{timeAgo}</Text>
@@ -461,13 +489,8 @@ const Home = ({ navigation }) => {
           style={styles.addCommentInline}
           onPress={() => openCommentModal(item)}
         >
-          <Image
-            source={{
-              uri: currentUser?.profilePic || "https://via.placeholder.com/30",
-            }}
-            style={styles.inlineCommentAvatar}
-          />
-          <Text style={styles.addCommentText}>Add a comment...</Text>
+          {renderAvatar(currentUser?.profilePic, wp(6))}
+          <Text style={styles.addCommentText}>Add a comment</Text>
         </TouchableOpacity>
       </View>
     );
@@ -519,7 +542,6 @@ const Home = ({ navigation }) => {
         {renderHeader()}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading your feed...</Text>
         </View>
       </SafeAreaView>
     );
@@ -629,14 +651,7 @@ const Home = ({ navigation }) => {
                   },
                 ]}
               >
-                <Image
-                  source={{
-                    uri:
-                      currentUser?.profilePic ||
-                      "https://via.placeholder.com/36",
-                  }}
-                  style={styles.modalInputAvatar}
-                />
+                {renderAvatar(currentUser?.profilePic, wp(8))}
                 <TextInput
                   ref={inputRef}
                   style={styles.modalInput}
@@ -703,11 +718,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  loadingText: {
-    marginTop: hp(2),
-    fontSize: wp(4),
-    color: theme.colors.textSecondary,
-  },
   feedContainer: {
     paddingBottom: hp(2),
   },
@@ -725,14 +735,7 @@ const styles = StyleSheet.create({
   userInfo: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  avatar: {
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-    marginRight: wp(2),
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    gap: wp(2),
   },
   username: {
     fontSize: wp(3.8),
@@ -818,14 +821,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: theme.colors.border,
     marginTop: hp(0.3),
-  },
-  inlineCommentAvatar: {
-    width: wp(6),
-    height: wp(6),
-    borderRadius: wp(3),
-    marginRight: wp(2),
-    borderWidth: 1,
-    borderColor: theme.colors.border,
   },
   addCommentText: {
     fontSize: wp(3.2),
@@ -936,13 +931,6 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1),
     gap: wp(2),
   },
-  modalCommentAvatar: {
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
   modalCommentContent: {
     flex: 1,
   },
@@ -981,13 +969,6 @@ const styles = StyleSheet.create({
     fontSize: wp(3.5),
     color: theme.colors.textSecondary,
     marginTop: hp(0.5),
-  },
-  modalInputAvatar: {
-    width: wp(8),
-    height: wp(8),
-    borderRadius: wp(4),
-    borderWidth: 1,
-    borderColor: theme.colors.border,
   },
   modalInput: {
     flex: 1,

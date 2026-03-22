@@ -273,7 +273,6 @@ const Chats = ({ navigation }) => {
         {renderHeader()}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading chats...</Text>
         </View>
       </SafeAreaView>
     );
@@ -409,11 +408,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  loadingText: {
-    marginTop: hp(1.5),
-    fontSize: wp(3.8),
-    color: theme.colors.textSecondary,
   },
 
   // Search Section

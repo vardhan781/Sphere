@@ -189,7 +189,6 @@ const UserProfile = ({ navigation, route }) => {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading profile...</Text>
         </View>
       );
     }
@@ -603,11 +602,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     minHeight: hp(50),
-  },
-  loadingText: {
-    marginTop: hp(2),
-    fontSize: wp(3.8),
-    color: theme.colors.textSecondary,
   },
   postsLoadingContainer: {
     paddingVertical: hp(4),

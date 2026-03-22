@@ -445,7 +445,6 @@ const Explore = ({ navigation }) => {
     return (
       <View style={styles.footerLoader}>
         <ActivityIndicator size="small" color={theme.colors.primary} />
-        <Text style={styles.footerLoaderText}>Loading more posts...</Text>
       </View>
     );
   };
@@ -459,7 +458,6 @@ const Explore = ({ navigation }) => {
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Discovering amazing content...</Text>
         </View>
       </SafeAreaView>
     );
@@ -608,11 +606,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  loadingText: {
-    marginTop: hp(2),
-    fontSize: wp(4),
-    color: theme.colors.textSecondary,
   },
   searchContainer: {
     paddingHorizontal: wp(4),
@@ -901,9 +894,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexDirection: "row",
     gap: wp(2),
-  },
-  footerLoaderText: {
-    fontSize: wp(3.2),
-    color: theme.colors.textSecondary,
   },
 });
