@@ -244,8 +244,8 @@ const ChatDetail = ({ navigation, route }) => {
 
     const showAvatar =
       !isOwnMessage &&
-      (index === messages.length - 1 ||
-        messages[index + 1]?.sender?._id !== item.sender?._id);
+      (index === reversedMessages.length - 1 ||
+        reversedMessages[index + 1]?.sender?._id !== item.sender?._id);
 
     return (
       <View key={item._id}>
@@ -679,7 +679,11 @@ const styles = StyleSheet.create({
     width: wp(8),
     height: wp(8),
     borderRadius: wp(4),
-    backgroundColor: "transparent",
+    backgroundColor: theme.colors.card,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 0.5,
+    borderColor: theme.colors.border,
   },
   messageAvatarPlaceholderText: {
     fontSize: wp(3.5),
